@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hushtype</string>
+    <string name="accessibility_label">Hushtype bubble</string>
+    <string name="accessibility_description">Shows the Hushtype bubble when you\'re typing and types what you dictate into the text field. Hushtype reads the text around your cursor only to polish your dictation and learn words you correct. It never collects or shares what\'s on your screen.</string>
+    <string name="accessibility_summary">Dictate into any app with a floating bubble</string>
+    <string name="channel_listening">Dictation</string>
+    <string name="channel_listening_description">Shown while Hushtype is using the microphone.</string>
+    <string name="notification_ready_title">Hushtype is listening</string>
+    <string name="notification_ready_text">The microphone is on only while you dictate.</string>
+    <string name="notification_stop">Stop</string>
+</resources>
