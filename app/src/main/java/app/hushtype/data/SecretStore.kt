@@ -20,6 +20,11 @@ class SecretStore(context: Context) {
 
     val hasAnthropicKey: Boolean get() = anthropicKey.isNotEmpty()
 
+    /** The device-sync secret, base64, or empty when sync is off. */
+    var syncSecret: String
+        get() = read("sync") ?: ""
+        set(value) = if (value.isBlank()) prefs.edit().remove("sync").apply() else write("sync", value)
+
     private fun key(): SecretKey {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (store.getEntry(ALIAS, null) as? KeyStore.SecretKeyEntry)?.let { return it.secretKey }

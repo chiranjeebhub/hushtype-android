@@ -93,6 +93,8 @@ fun SettingsScreen(app: HushtypeApp, setup: SetupState) {
         SectionLabel("Polish")
         PolishPicker(app)
 
+        SyncSection(app)
+
         SectionLabel("Bubble")
         HushCard(padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
             SwitchRow(

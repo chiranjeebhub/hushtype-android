@@ -56,8 +56,8 @@ object VocabularyEdits {
             val existing = byKey[key]
             byKey[key] = when {
                 existing == null -> TermRecord(text, now, now, learned = learned)
-                existing.deleted -> TermRecord(text, now, now, learned = learned)
-                existing.text != text -> existing.copy(text = text, updatedAt = now)
+                existing.deleted -> TermRecord(text, now, after(existing.updatedAt, now), learned = learned)
+                existing.text != text -> existing.copy(text = text, updatedAt = after(existing.updatedAt, now))
                 else -> existing
             }
         }
@@ -66,23 +66,27 @@ object VocabularyEdits {
 
     fun removeTerm(state: VocabularyState, term: String, now: Long): VocabularyState {
         val key = TermRecord.keyOf(term)
-        return state.copy(terms = state.terms.map { if (it.key == key && !it.deleted) it.copy(deleted = true, updatedAt = now) else it })
+        return state.copy(terms = state.terms.map { if (it.key == key && !it.deleted) it.copy(deleted = true, updatedAt = after(it.updatedAt, now)) else it })
     }
 
     fun upsertSnippet(state: VocabularyState, snippet: Snippet, now: Long): VocabularyState {
-        val existing = state.snippets.firstOrNull { it.id == snippet.id }
+        val id = snippet.id.lowercase()
+        val existing = state.snippets.firstOrNull { it.id.lowercase() == id }
         val record = SnippetRecord(
-            id = snippet.id,
+            id = id,
             trigger = snippet.trigger.trim(),
             expansion = snippet.expansion,
             createdAt = existing?.createdAt ?: now,
-            updatedAt = now,
+            updatedAt = after(existing?.updatedAt, now),
         )
-        return state.copy(snippets = state.snippets.filter { it.id != snippet.id } + record)
+        return state.copy(snippets = state.snippets.filter { it.id.lowercase() != id } + record)
     }
 
+    /** Every edit moves an entry's time forward, even when the clock didn't. */
+    private fun after(previous: Long?, now: Long) = if (previous != null && now <= previous) previous + 1 else now
+
     fun removeSnippet(state: VocabularyState, id: String, now: Long): VocabularyState =
-        state.copy(snippets = state.snippets.map { if (it.id == id && !it.deleted) it.copy(deleted = true, updatedAt = now) else it })
+        state.copy(snippets = state.snippets.map { if (it.id.lowercase() == id.lowercase() && !it.deleted) it.copy(deleted = true, updatedAt = after(it.updatedAt, now)) else it })
 
     /**
      * Combines two copies item by item: the most recent edit of each entry wins, removals
@@ -92,10 +96,11 @@ object VocabularyEdits {
         val terms = (local.terms + remote.terms).groupBy { it.key }.map { (_, copies) ->
             copies.reduce { a, b -> if (b.updatedAt > a.updatedAt) b.copy(createdAt = minOf(a.createdAt, b.createdAt)) else a.copy(createdAt = minOf(a.createdAt, b.createdAt)) }
         }
-        val snippets = (local.snippets + remote.snippets).groupBy { it.id }.map { (_, copies) ->
+        val snippets = (local.snippets + remote.snippets).groupBy { it.id.lowercase() }.map { (_, copies) ->
             copies.reduce { a, b -> if (b.updatedAt > a.updatedAt) b else a }
         }
-        return VocabularyState(terms, snippets)
+        // Sorted, so two devices holding the same entries hold equal states.
+        return VocabularyState(terms.sortedBy { it.key }, snippets.sortedBy { it.id.lowercase() })
     }
 
     /** Drops tombstones older than [cutoff], once every device has had time to see them. */

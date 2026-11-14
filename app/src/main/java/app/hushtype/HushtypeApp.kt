@@ -3,6 +3,7 @@ package app.hushtype
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import app.hushtype.data.DeviceSync
 import app.hushtype.data.FileVocabularyRepository
 import app.hushtype.data.HistoryStore
 import app.hushtype.data.SecretStore
@@ -22,6 +23,8 @@ class HushtypeApp : Application() {
         private set
     lateinit var history: HistoryStore
         private set
+    lateinit var sync: DeviceSync
+        private set
     val onDevice by lazy { OnDevicePolisher() }
     val dictation by lazy { DictationController(this) }
 
@@ -32,6 +35,7 @@ class HushtypeApp : Application() {
         secrets = SecretStore(this)
         vocabulary = FileVocabularyRepository(File(filesDir, "vocabulary.json"))
         history = HistoryStore(File(filesDir, "history.json"))
+        sync = DeviceSync(vocabulary, secrets).also { it.startWatching() }
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL_LISTENING, getString(R.string.channel_listening), NotificationManager.IMPORTANCE_LOW).apply {
                 description = getString(R.string.channel_listening_description)

@@ -79,6 +79,10 @@ dependencies {
     // Gemini Nano on supported phones, for polishing without the network.
     implementation("com.google.mlkit:genai-prompt:1.0.0-beta5")
 
+    // Device sync: show the pairing QR code, and scan one with Google's scanner (no camera permission).
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
 }

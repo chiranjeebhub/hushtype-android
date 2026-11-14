@@ -27,11 +27,17 @@ and [Hushtype Keyboard](https://github.com/chiranjeebhub/HushType-Keyboard) for 
 The microphone is used only while you dictate. A foreground service runs during dictation and for
 two minutes after, then stops, so there's no permanent notification or mic indicator.
 
-## Dictionary and snippets
+## Dictionary, snippets and sync
 
 Stored in one JSON file behind `VocabularyRepository`. Every entry carries its edit time and
-removals stay as tombstones, so cross-device sync can merge entry by entry
-(`VocabularyEdits.merge`) and a removal sticks.
+removals stay as tombstones, so devices merge entry by entry (`VocabularyEdits.merge`) and a
+removal sticks.
+
+**Settings → Sync** pairs the phone with Hushtype on the Mac, iPhone and other phones, with no
+account: scan (or type) another device's `HT1-…` code, or start a group here and show its QR code.
+Everything is end-to-end encrypted (HKDF-SHA256 keys, AES-256-GCM); the server only stores a blob it
+can't read. The protocol is specified in hushtype's `sync-server/README.md`, and `SyncTest` checks
+the reference test vectors from `sync-server/reference.mjs`.
 
 ## Build
 
