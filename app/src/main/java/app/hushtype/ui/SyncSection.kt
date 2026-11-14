@@ -91,7 +91,7 @@ fun SyncSection(app: HushtypeApp) {
         if (status == DeviceSync.Status.Off) {
             SettingRow("Sync with your other devices", "Your dictionary and snippets, end-to-end encrypted. No account.", Icons.Rounded.Devices)
             Divider()
-            SettingRow("Scan a code", "From Hushtype on your Mac or another phone", Icons.Rounded.QrCodeScanner, onClick = { scan() })
+            SettingRow("Scan a code", "Show it on your Mac (Settings → General → Your devices) or iPhone", Icons.Rounded.QrCodeScanner, onClick = { scan() })
             Divider()
             SettingRow("Type a code", "It starts with HT1", Icons.Rounded.Keyboard, onClick = { error = null; typing = true })
             Divider()
@@ -166,7 +166,7 @@ private fun CodeDialog(code: String, dismiss: () -> Unit) {
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "On your Mac, open Settings → Your devices. On another phone, open Settings → Sync → Scan a code.",
+                    "On your Mac: Settings → General → Your devices, then enter this code. On your iPhone: Settings → Sync with Mac and Android. On another Android phone: Settings → Sync → Scan a code.",
                     style = HushType.subhead, color = HushTheme.colors.textSecondary,
                 )
                 Box(Modifier.clip(RoundedCornerShape(18.dp)).background(Color.White).padding(12.dp)) {
