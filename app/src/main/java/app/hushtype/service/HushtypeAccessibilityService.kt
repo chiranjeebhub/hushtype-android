@@ -98,8 +98,8 @@ class HushtypeAccessibilityService : AccessibilityService(), TextTarget {
         val current = currentText(node)
         // Use the selection from when dictation started if the field still looks the same.
         val sameField = field != null && field.node == node && field.end <= current.length
-        var start = if (sameField) field!!.start else node.textSelectionStart.takeIf { it in 0..current.length } ?: current.length
-        var end = if (sameField) field!!.end else node.textSelectionEnd.takeIf { it in 0..current.length } ?: current.length
+        var start = if (sameField) field.start else node.textSelectionStart.takeIf { it in 0..current.length } ?: current.length
+        var end = if (sameField) field.end else node.textSelectionEnd.takeIf { it in 0..current.length } ?: current.length
         if (start > end) start = end.also { end = start }
 
         val updated = current.substring(0, start) + text + current.substring(end)

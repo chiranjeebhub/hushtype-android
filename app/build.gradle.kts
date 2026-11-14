@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -6,7 +8,7 @@ plugins {
 
 android {
     namespace = "app.hushtype"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "app.hushtype.android"
@@ -20,7 +22,7 @@ android {
         // Release builds are signed with a local keystore described in keystore.properties (not in git).
         val props = rootProject.file("keystore.properties")
         if (props.exists()) {
-            val p = java.util.Properties().apply { props.inputStream().use { load(it) } }
+            val p = Properties().apply { props.inputStream().use { load(it) } }
             create("release") {
                 storeFile = rootProject.file(p.getProperty("storeFile"))
                 storePassword = p.getProperty("storePassword")

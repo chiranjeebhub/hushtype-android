@@ -33,7 +33,7 @@ import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.OfflineBolt
 import androidx.compose.material.icons.rounded.PhotoSizeSelectSmall
-import androidx.compose.material.icons.rounded.TextSnippet
+import androidx.compose.material.icons.automirrored.rounded.TextSnippet
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.AlertDialog
@@ -128,7 +128,7 @@ fun SettingsScreen(app: HushtypeApp, setup: SetupState) {
                 SettingRow("Download speech for offline use", "For the language above", Icons.Rounded.CloudDownload, onClick = { downloadSpeech(context, s.language) })
             }
             Divider()
-            SwitchRow("Use the text around the cursor", "Helps continue your sentence and spell names already there", Icons.Rounded.TextSnippet, s.useNearbyText) { s.useNearbyText = it }
+            SwitchRow("Use the text around the cursor", "Helps continue your sentence and spell names already there", Icons.AutoMirrored.Rounded.TextSnippet, s.useNearbyText) { s.useNearbyText = it }
             Divider()
             SwitchRow("Learn from my corrections", "Names you respell after dictating join your dictionary", Icons.Rounded.AutoFixHigh, s.learnFromCorrections) { s.learnFromCorrections = it }
         }

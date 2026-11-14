@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.MenuBook
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.ShortText
+import androidx.compose.material.icons.automirrored.rounded.ShortText
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -34,8 +34,8 @@ import app.hushtype.HushtypeApp
 
 enum class Tab(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Rounded.Home),
-    DICTIONARY("Dictionary", Icons.Rounded.MenuBook),
-    SNIPPETS("Snippets", Icons.Rounded.ShortText),
+    DICTIONARY("Dictionary", Icons.AutoMirrored.Rounded.MenuBook),
+    SNIPPETS("Snippets", Icons.AutoMirrored.Rounded.ShortText),
     SETTINGS("Settings", Icons.Rounded.Settings),
 }
 
