@@ -94,7 +94,7 @@ class SyncClient(
     }
 
     companion object {
-        const val DEFAULT_SERVER = "https://hushtype-sync.chiranjeeb.workers.dev"
+        const val DEFAULT_SERVER = "https://hushtype-sync.chiranjib-jena.workers.dev"
         const val TOMBSTONE_DAYS = 30L
     }
 }
