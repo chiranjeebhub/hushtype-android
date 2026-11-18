@@ -9,6 +9,7 @@ import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.text.TextUtils
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
@@ -63,7 +64,11 @@ class BubbleController(
         elevation = 6 * density
         alpha = 0f
     }
-    private val captionParams = overlayParams(touchable = false)
+    private val captionParams = overlayParams(touchable = false).also {
+        // TextView.setText relayouts through its layout params, and measuring the caption before it is
+        // on screen leaves it without any. Give it the window's params up front.
+        caption.layoutParams = it
+    }
     private val dismiss = DismissTarget(context, (64 * density).roundToInt())
     private val dismissParams = overlayParams(touchable = false).apply {
         width = dismiss.sizePx
@@ -118,7 +123,13 @@ class BubbleController(
 
         scope.launch {
             combine(dictation.phase, dictation.liveText) { phase, text -> phase to text }.collect { (phase, text) ->
-                render(phase, text)
+                // A drawing problem must never take down the accessibility service, or Android
+                // marks it crashed and the bubble is gone until the user turns it on again.
+                try {
+                    render(phase, text)
+                } catch (e: RuntimeException) {
+                    Log.e(TAG, "Couldn't update the bubble", e)
+                }
             }
         }
         scope.launch { dictation.level.collect { bubble.setLevel(it) } }
@@ -292,6 +303,7 @@ class BubbleController(
 
     companion object {
         const val SNOOZE_MS = 60 * 60 * 1000L
+        private const val TAG = "HushtypeBubble"
     }
 }
 
