@@ -36,6 +36,10 @@ class Transcriber(private val context: Context) {
     /** Everything heard so far, including words that may still change. */
     val text: StateFlow<String> = _text.asStateFlow()
 
+    private val _ready = MutableStateFlow(false)
+    /** The recognizer is actually hearing. It can take most of a second to get there after [start]. */
+    val ready: StateFlow<Boolean> = _ready.asStateFlow()
+
     private var active = false
     private var finishing = false
     private val committed = StringBuilder()
@@ -59,6 +63,7 @@ class Transcriber(private val context: Context) {
         committed.clear()
         partial = ""
         _text.value = ""
+        _ready.value = false
         restarts = 0
         active = true
         finishing = false
@@ -157,7 +162,9 @@ class Transcriber(private val context: Context) {
     }
 
     private val listener = object : RecognitionListener {
-        override fun onReadyForSpeech(params: Bundle?) {}
+        override fun onReadyForSpeech(params: Bundle?) {
+            _ready.value = true
+        }
         override fun onBeginningOfSpeech() {}
         override fun onBufferReceived(buffer: ByteArray?) {}
         override fun onEndOfSpeech() {}

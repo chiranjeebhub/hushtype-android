@@ -122,11 +122,11 @@ class BubbleController(
         }
 
         scope.launch {
-            combine(dictation.phase, dictation.liveText) { phase, text -> phase to text }.collect { (phase, text) ->
+            combine(dictation.phase, dictation.liveText, dictation.hearing) { phase, text, hearing -> Triple(phase, text, hearing) }.collect { (phase, text, hearing) ->
                 // A drawing problem must never take down the accessibility service, or Android
                 // marks it crashed and the bubble is gone until the user turns it on again.
                 try {
-                    render(phase, text)
+                    render(phase, text, hearing)
                 } catch (e: RuntimeException) {
                     Log.e(TAG, "Couldn't update the bubble", e)
                 }
@@ -150,7 +150,9 @@ class BubbleController(
         showDismiss(false)
     }
 
-    private fun render(phase: Phase, text: String) {
+    private var buzzed = false
+
+    private fun render(phase: Phase, text: String, hearing: Boolean) {
         bubble.setLook(
             when (phase) {
                 Phase.Idle -> BubbleView.Look.IDLE
@@ -160,9 +162,14 @@ class BubbleController(
                 is Phase.Notice -> if (phase.isError) BubbleView.Look.ATTENTION else BubbleView.Look.IDLE
             },
         )
-        if (phase == Phase.Listening && settings.haptics) bubble.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        // Buzz once the recognizer is really hearing, so people know when to start talking.
+        if (phase != Phase.Listening) buzzed = false
+        else if (hearing && !buzzed) {
+            buzzed = true
+            if (settings.haptics) bubble.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        }
         val words = when (phase) {
-            Phase.Listening -> text.ifBlank { "Listening…" }
+            Phase.Listening -> text.ifBlank { if (hearing) "Listening…" else "One moment…" }
             is Phase.Working -> if (phase.polishing) "Polishing…" else text.ifBlank { "Transcribing…" }
             is Phase.Notice -> phase.message
             else -> null

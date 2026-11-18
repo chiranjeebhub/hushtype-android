@@ -72,6 +72,7 @@ class DictationController(private val app: HushtypeApp) {
     val phase: StateFlow<Phase> = _phase.asStateFlow()
     val level: StateFlow<Float> get() = transcriber.level
     val liveText: StateFlow<String> get() = transcriber.text
+    val hearing: StateFlow<Boolean> get() = transcriber.ready
 
     var target: TextTarget? = null
     private var snapshot: FieldSnapshot? = null
