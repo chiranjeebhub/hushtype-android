@@ -23,7 +23,7 @@ import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * The floating dictation bubble: an indigo orb with a microphone that turns into a live
+ * The floating dictation bubble: a see-through indigo orb with the Hushtype mark that turns into a live
  * waveform while you speak, a mint ring while the text is being polished, and a check when
  * it's typed. Drawn by hand so it animates smoothly at any size.
  */
@@ -104,7 +104,12 @@ class BubbleView(context: Context, private val diameterPx: Int) : View(context) 
 
         // Rest a little more quietly on screen when nothing is happening.
         val idleFor = now - lastTouch
-        val restAlpha = if (look == Look.IDLE && idleFor > 2500) 0.62f else 1f
+        // See-through while waiting, like a glass button; fully solid while it's working for you.
+        val restAlpha = when {
+            look != Look.IDLE -> 1f
+            pressed || idleFor <= 2500 -> 0.82f
+            else -> 0.6f
+        }
         fade += (restAlpha - fade) * 0.12f
         val pressScale = if (pressed) 0.92f else 1f
         val appear = if (look == Look.DONE) 1f + 0.08f * sin(min(t * 5f, PI.toFloat())) else 1f
@@ -140,9 +145,9 @@ class BubbleView(context: Context, private val diameterPx: Int) : View(context) 
         canvas.drawCircle(c, c, r - rim.strokeWidth / 2, rim)
 
         when (look) {
-            Look.IDLE -> drawMic(canvas, c, r, Color.WHITE)
+            Look.IDLE -> drawLogo(canvas, c, r)
             Look.ATTENTION -> {
-                drawMic(canvas, c, r, Color.WHITE)
+                drawLogo(canvas, c, r)
                 ring.color = AMBER
                 ring.alpha = 230
                 ring.strokeWidth = diameterPx * 0.05f
@@ -165,22 +170,30 @@ class BubbleView(context: Context, private val diameterPx: Int) : View(context) 
         else if (look == Look.IDLE && idleFor <= 2500) postInvalidateDelayed(2600 - idleFor)
     }
 
-    private fun drawMic(canvas: Canvas, c: Float, r: Float, color: Int) {
-        glyph.color = color
+    /** The Hushtype mark (rising bars and a mint text caret), from res/drawable/hushtype_logo.xml. */
+    private fun drawLogo(canvas: Canvas, c: Float, r: Float) {
+        // The mark spans x 96..412 and y 116..396 in the logo's 512 grid.
+        val k = r * 1.12f / 316f
+        canvas.save()
+        canvas.translate(c - 254f * k, c - 256f * k)
+        canvas.scale(k, k)
         glyph.style = Paint.Style.FILL
-        val w = r * 0.36f
-        val h = r * 0.62f
-        val top = c - r * 0.5f
-        rect.set(c - w / 2, top, c + w / 2, top + h)
-        canvas.drawRoundRect(rect, w / 2, w / 2, glyph)
-        glyph.style = Paint.Style.STROKE
-        glyph.strokeWidth = r * 0.09f
-        val cupW = r * 0.56f
-        rect.set(c - cupW / 2, top + h * 0.38f, c + cupW / 2, top + h * 1.12f)
-        canvas.drawArc(rect, 20f, 140f, false, glyph)
-        val stemTop = top + h * 1.12f
-        canvas.drawLine(c, stemTop, c, stemTop + r * 0.16f, glyph)
-        glyph.style = Paint.Style.FILL
+        glyph.color = Color.WHITE
+        for ((i, bar) in LOGO_BARS.withIndex()) {
+            glyph.alpha = (LOGO_ALPHAS[i] * 255).toInt()
+            rect.set(bar[0] - 17f, bar[1], bar[0] + 17f, bar[2])
+            canvas.drawRoundRect(rect, 17f, 17f, glyph)
+        }
+        glyph.color = MINT
+        rect.set(352f, 116f, 382f, 396f)
+        canvas.drawRoundRect(rect, 15f, 15f, glyph)
+        rect.set(322f, 116f, 412f, 142f)
+        canvas.drawRoundRect(rect, 13f, 13f, glyph)
+        rect.set(322f, 370f, 412f, 396f)
+        canvas.drawRoundRect(rect, 13f, 13f, glyph)
+        glyph.color = Color.WHITE
+        glyph.alpha = 255
+        canvas.restore()
     }
 
     private fun drawWave(canvas: Canvas, c: Float, r: Float, t: Float) {
@@ -306,5 +319,14 @@ class BubbleView(context: Context, private val diameterPx: Int) : View(context) 
         val VIOLET_GLOW = Color.rgb(160, 140, 255)
         val MINT = Color.rgb(125, 240, 196)
         val AMBER = Color.rgb(255, 196, 92)
+
+        /** Logo bars as x centre, top and bottom in the 512 grid. */
+        private val LOGO_BARS = arrayOf(
+            floatArrayOf(113f, 226f, 286f),
+            floatArrayOf(169f, 176f, 336f),
+            floatArrayOf(225f, 126f, 386f),
+            floatArrayOf(281f, 196f, 316f),
+        )
+        private val LOGO_ALPHAS = floatArrayOf(0.55f, 0.7f, 0.85f, 1f)
     }
 }
