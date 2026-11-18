@@ -144,6 +144,18 @@ private fun StepPage(
 }
 
 @Composable
+private fun SetupHint(number: Int, text: String) {
+    val c = HushTheme.colors
+    Row(verticalAlignment = Alignment.Top) {
+        Box(Modifier.size(22.dp).background(Hush.violet.copy(alpha = 0.14f), CircleShape), contentAlignment = Alignment.Center) {
+            Text("$number", style = HushType.subhead.copy(fontWeight = FontWeight.SemiBold), color = Hush.violet)
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(text, style = HushType.subhead, color = c.textSecondary)
+    }
+}
+
+@Composable
 private fun Granted(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 6.dp)) {
         Icon(Icons.Rounded.CheckCircle, null, tint = Hush.mintDeep, modifier = Modifier.size(22.dp))
@@ -189,9 +201,21 @@ private fun BubbleStep(setup: SetupState, next: () -> Unit) {
     StepPage(
         Icons.Rounded.Accessibility,
         "Turn on the bubble",
-        "Android lets an app float over others and type into them only as an accessibility service. Turn on “Hushtype bubble” on the next screen.",
+        "Android lets an app float over others and type into them only as an accessibility service. Turn on “Hushtype bubble” in Accessibility settings.",
         content = {
             if (setup.accessibility) Granted("Bubble is on")
+            else {
+                HushCard {
+                    Text("Two quick steps", style = HushType.body.copy(fontWeight = FontWeight.SemiBold), color = c.text)
+                    Spacer(Modifier.height(8.dp))
+                    SetupHint(1, "Android blocks this switch for apps installed outside the Play Store. Open App info, tap ⋮ in the top corner and choose “Allow restricted settings”.")
+                    TextButton(onClick = { SetupState.openAppSettings(context) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 30.dp)) {
+                        Text("Open App info", color = Hush.violet, style = HushType.body.copy(fontWeight = FontWeight.SemiBold))
+                    }
+                    SetupHint(2, "Tap the button below. Scroll to the bottom of the Accessibility page, open “Downloaded apps” (or “Installed apps”), choose Hushtype bubble and turn it on.")
+                }
+                Spacer(Modifier.height(12.dp))
+            }
             HushCard {
                 Row(verticalAlignment = Alignment.Top) {
                     Icon(Icons.Rounded.Shield, null, tint = Hush.violet, modifier = Modifier.size(20.dp))
@@ -204,18 +228,6 @@ private fun BubbleStep(setup: SetupState, next: () -> Unit) {
                             style = HushType.subhead, color = c.textSecondary,
                         )
                     }
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-            HushCard {
-                Text("Android says it's a restricted setting?", style = HushType.body.copy(fontWeight = FontWeight.SemiBold), color = c.text)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Apps installed outside the Play Store need one extra tap: open App info, tap ⋮ in the corner, choose “Allow restricted settings”, then come back here.",
-                    style = HushType.subhead, color = c.textSecondary,
-                )
-                TextButton(onClick = { SetupState.openAppSettings(context) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
-                    Text("Open App info", color = Hush.violet, style = HushType.body.copy(fontWeight = FontWeight.SemiBold))
                 }
             }
         },

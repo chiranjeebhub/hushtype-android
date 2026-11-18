@@ -72,13 +72,16 @@ data class SetupState(val microphone: Boolean, val accessibility: Boolean, val n
         }
 
         fun openAccessibilitySettings(context: Context) {
+            // The per-service page (ACCESSIBILITY_DETAILS_SETTINGS) needs a signature permission, so open
+            // the list and ask Settings to scroll to and highlight Hushtype's row where it supports that.
             val me = ComponentName(context, HushtypeAccessibilityService::class.java).flattenToString()
-            // Android 13+ can open Hushtype's own page directly; older versions show the list.
-            val detail = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS")
-                .putExtra(Intent.EXTRA_COMPONENT_NAME, me)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            val list = Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            runCatching { context.startActivity(detail) }.onFailure { context.startActivity(list) }
+            val args = android.os.Bundle().apply { putString(":settings:fragment_args_key", me) }
+            context.startActivity(
+                Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS)
+                    .putExtra(":settings:fragment_args_key", me)
+                    .putExtra(":settings:show_fragment_args", args)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
         }
 
         fun openAppSettings(context: Context) {
