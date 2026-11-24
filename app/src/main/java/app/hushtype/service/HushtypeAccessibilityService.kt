@@ -33,6 +33,7 @@ class HushtypeAccessibilityService : AccessibilityService(), TextTarget {
 
     override fun onDestroy() {
         running.value = false
+        settle.removeCallbacksAndMessages(null)
         if (app.dictation.target === this) app.dictation.target = null
         if (::bubble.isInitialized) bubble.destroy()
         super.onDestroy()
@@ -46,9 +47,18 @@ class HushtypeAccessibilityService : AccessibilityService(), TextTarget {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOWS_CHANGED,
             AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED,
-            AccessibilityEvent.TYPE_VIEW_CLICKED -> refresh()
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                refresh()
+                // The keyboard's window lingers while it animates away (going home, switching apps),
+                // and no event follows once it's gone, so look again shortly after.
+                settle.removeCallbacks(settleRefresh)
+                settle.postDelayed(settleRefresh, 650)
+            }
         }
     }
+
+    private val settle = android.os.Handler(android.os.Looper.getMainLooper())
+    private val settleRefresh = Runnable { refresh() }
 
     /** Decides whether the bubble should show, and keeps it clear of the keyboard. */
     private fun refresh() {

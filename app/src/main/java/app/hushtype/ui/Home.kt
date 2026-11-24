@@ -167,18 +167,24 @@ private fun KeepRunningCard() {
             else "Your phone may stop Hushtype to save battery. Let it run without battery limits.",
             style = HushType.subhead, color = c.textSecondary,
         )
-        Row {
-            TextButton(onClick = { SetupState.requestUnrestricted(context) }, contentPadding = PaddingValues(0.dp)) {
-                Text("Allow", color = Hush.violet, style = HushType.body.copy(fontWeight = FontWeight.SemiBold))
-            }
-            if (SetupState.isXiaomi) {
-                Spacer(Modifier.width(20.dp))
-                TextButton(onClick = { SetupState.openAutostart(context) }, contentPadding = PaddingValues(0.dp)) {
-                    Text("Autostart", color = Hush.violet, style = HushType.body.copy(fontWeight = FontWeight.SemiBold))
-                }
-            }
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SmallAction("Allow") { SetupState.requestUnrestricted(context) }
+            if (SetupState.isXiaomi) SmallAction("Autostart") { SetupState.openAutostart(context) }
         }
     }
+}
+
+/** A compact violet pill for secondary actions inside a card. */
+@Composable
+private fun SmallAction(text: String, onClick: () -> Unit) {
+    Text(
+        text,
+        color = Hush.violetDeep.takeUnless { HushTheme.colors.isDark } ?: Hush.violet,
+        style = HushType.subhead.copy(fontWeight = FontWeight.SemiBold),
+        modifier = Modifier.clip(CircleShape).background(HushTheme.colors.accentSoft).clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    )
 }
 
 @Composable

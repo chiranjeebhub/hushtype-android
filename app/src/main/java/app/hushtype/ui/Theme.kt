@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -219,8 +220,8 @@ fun SwitchRow(title: String, subtitle: String?, icon: ImageVector?, checked: Boo
 }
 
 @Composable
-fun Divider() {
-    Box(Modifier.fillMaxWidth().padding(start = 48.dp).height(1.dp).background(HushTheme.colors.hairline))
+fun Divider(indent: Dp = 48.dp) {
+    Box(Modifier.fillMaxWidth().padding(start = indent).height(1.dp).background(HushTheme.colors.hairline))
 }
 
 /** The main call to action: a violet gradient pill. */

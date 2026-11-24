@@ -47,6 +47,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
@@ -119,7 +121,9 @@ fun SettingsScreen(app: HushtypeApp, setup: SetupState) {
             ) { StatusDot(if (setup.unrestricted) Hush.mint else Hush.amber, if (setup.unrestricted) "On" else "Off") }
             if (SetupState.isXiaomi) {
                 Divider()
-                SettingRow("Autostart", "Xiaomi phones also need this on for Hushtype", Icons.Rounded.RestartAlt, onClick = { SetupState.openAutostart(context) })
+                SettingRow("Autostart", "Xiaomi phones also need this on for Hushtype", Icons.Rounded.RestartAlt, onClick = { SetupState.openAutostart(context) }) {
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = c.textTertiary)
+                }
             }
             if (System.currentTimeMillis() < s.bubbleSnoozedUntil) {
                 Divider()

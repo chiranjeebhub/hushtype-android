@@ -28,6 +28,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import app.hushtype.HushtypeApp
@@ -81,6 +84,11 @@ fun MainScreen(app: HushtypeApp, setup: SetupState) {
                     }
                 }
             }
+            // Content fades out under the status bar instead of being cut off.
+            Box(
+                Modifier.fillMaxWidth().height(14.dp)
+                    .background(Brush.verticalGradient(listOf(c.background, c.background.copy(alpha = 0f)))),
+            )
         }
     }
 }

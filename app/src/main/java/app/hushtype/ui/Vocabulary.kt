@@ -172,7 +172,7 @@ fun SnippetsScreen(app: HushtypeApp) {
                         "my address" to "221B Baker Street, London",
                         "sign off" to "Thanks, and talk soon!",
                     ).forEachIndexed { i, (say, type) ->
-                        if (i > 0) Divider()
+                        if (i > 0) Divider(indent = 0.dp)
                         Row(
                             Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                                 .clickable { editing = Snippet(trigger = say, expansion = type) }
