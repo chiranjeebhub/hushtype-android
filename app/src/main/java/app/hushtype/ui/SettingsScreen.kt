@@ -103,7 +103,9 @@ fun SettingsScreen(app: HushtypeApp, setup: SetupState) {
         SectionLabel("Bubble")
         HushCard(padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
             SwitchRow(
-                "Always show the bubble", "Off: it shows only when you're typing", Icons.Rounded.Visibility,
+                "Always show the bubble",
+                if (s.bubbleMode == BubbleMode.ALWAYS) "It stays on screen in every app" else "It shows only when you're typing",
+                Icons.Rounded.Visibility,
                 s.bubbleMode == BubbleMode.ALWAYS,
             ) { s.bubbleMode = if (it) BubbleMode.ALWAYS else BubbleMode.WHEN_TYPING }
             Divider()
