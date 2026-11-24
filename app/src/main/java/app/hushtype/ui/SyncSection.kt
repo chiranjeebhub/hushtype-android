@@ -33,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -101,12 +102,21 @@ fun SyncSection(app: HushtypeApp) {
         } else {
             val (color, line) = when (val s = status) {
                 DeviceSync.Status.Syncing -> Hush.amber to "Syncing…"
-                is DeviceSync.Status.Synced -> Hush.mint to if (s.at == 0L) "On" else "Synced ${DateUtils.getRelativeTimeSpanString(s.at)}"
+                is DeviceSync.Status.Synced -> Hush.mint to when {
+                    s.at == 0L -> "Dictionary and snippets"
+                    System.currentTimeMillis() - s.at < DateUtils.MINUTE_IN_MILLIS -> "Synced just now"
+                    else -> "Synced ${DateUtils.getRelativeTimeSpanString(s.at, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)}"
+                }
                 is DeviceSync.Status.Failed -> Hush.red to s.message
                 DeviceSync.Status.Off -> Hush.amber to "Off"
             }
-            SettingRow("Sync is on", "Dictionary and snippets", Icons.Rounded.Devices, onClick = { scope.launch { sync.syncNow() } }) {
-                StatusDot(color, line.take(28))
+            SettingRow(
+                "Sync is on",
+                if (status is DeviceSync.Status.Failed) "Tap to try again" else "$line · tap to sync now",
+                Icons.Rounded.Devices,
+                onClick = { scope.launch { sync.syncNow() } },
+            ) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(color))
             }
             if (status is DeviceSync.Status.Failed) {
                 Text((status as DeviceSync.Status.Failed).message, style = HushType.subhead, color = Hush.red, modifier = Modifier.padding(start = 48.dp, bottom = 6.dp))

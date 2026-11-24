@@ -37,8 +37,6 @@ import androidx.compose.material.icons.automirrored.rounded.TextSnippet
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,6 +47,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.rounded.RestartAlt
+import androidx.compose.material.icons.rounded.BatteryChargingFull
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -75,7 +78,7 @@ fun SettingsScreen(app: HushtypeApp, setup: SetupState) {
     var pickLanguage by remember { mutableStateOf(false) }
 
     Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
-        Text("Settings", style = HushType.largeTitle, color = c.text, modifier = Modifier.padding(top = 36.dp, bottom = 4.dp))
+        Text("Settings", style = HushType.largeTitle, color = c.text, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
 
         if (!setup.ready) {
             SectionLabel("Setup")
@@ -84,8 +87,8 @@ fun SettingsScreen(app: HushtypeApp, setup: SetupState) {
                     StatusDot(if (setup.microphone) Hush.mint else Hush.amber, if (setup.microphone) "On" else "Off")
                 }
                 Divider()
-                SettingRow("Bubble", "Accessibility → Hushtype bubble", Icons.Rounded.Accessibility, onClick = { SetupState.openAccessibilitySettings(context) }) {
-                    StatusDot(if (setup.accessibility) Hush.mint else Hush.amber, if (setup.accessibility) "On" else "Off")
+                SettingRow("Bubble", if (setup.bubbleStopped) "Stopped. Switch it off and on in Accessibility › Downloaded apps" else "Accessibility › Downloaded apps › Hushtype bubble", Icons.Rounded.Accessibility, onClick = { SetupState.openAccessibilitySettings(context) }) {
+                    StatusDot(if (setup.ready || (setup.accessibility && setup.bubbleRunning)) Hush.mint else Hush.amber, if (setup.bubbleRunning) "On" else if (setup.bubbleStopped) "Stopped" else "Off")
                 }
             }
         }
@@ -103,15 +106,21 @@ fun SettingsScreen(app: HushtypeApp, setup: SetupState) {
             ) { s.bubbleMode = if (it) BubbleMode.ALWAYS else BubbleMode.WHEN_TYPING }
             Divider()
             var size by remember { mutableFloatStateOf(s.bubbleSize) }
-            SettingRow("Size", "Takes effect the next time the bubble turns on", Icons.Rounded.PhotoSizeSelectSmall)
-            Slider(
-                value = size, onValueChange = { size = it }, onValueChangeFinished = { s.bubbleSize = size },
-                valueRange = 0.8f..1.3f, steps = 4,
-                colors = SliderDefaults.colors(thumbColor = Hush.violet, activeTrackColor = Hush.violet),
-                modifier = Modifier.padding(start = 48.dp, bottom = 6.dp),
-            )
+            SettingRow("Size", "Applies the next time the bubble appears", Icons.Rounded.PhotoSizeSelectSmall)
+            SizePicker(size, Modifier.padding(start = 48.dp, bottom = 10.dp)) { size = it; s.bubbleSize = it }
             Divider()
-            SwitchRow("Haptics", "A tap when the bubble starts listening", Icons.Rounded.Vibration, s.haptics) { s.haptics = it }
+            SwitchRow("Haptics", "A buzz when the bubble is ready to hear you", Icons.Rounded.Vibration, s.haptics) { s.haptics = it }
+            Divider()
+            SettingRow(
+                "Keep running in the background",
+                if (setup.unrestricted) "No battery limits" else "Your phone may stop the bubble to save battery",
+                Icons.Rounded.BatteryChargingFull,
+                onClick = { if (!setup.unrestricted) SetupState.requestUnrestricted(context) else SetupState.openAppSettings(context) },
+            ) { StatusDot(if (setup.unrestricted) Hush.mint else Hush.amber, if (setup.unrestricted) "On" else "Off") }
+            if (SetupState.isXiaomi) {
+                Divider()
+                SettingRow("Autostart", "Xiaomi phones also need this on for Hushtype", Icons.Rounded.RestartAlt, onClick = { SetupState.openAutostart(context) })
+            }
             if (System.currentTimeMillis() < s.bubbleSnoozedUntil) {
                 Divider()
                 SettingRow("Bubble is hidden for now", "You dropped it on ✕", Icons.Rounded.BubbleChart, onClick = { s.bubbleSnoozedUntil = 0 }) {
@@ -175,6 +184,33 @@ fun SettingsScreen(app: HushtypeApp, setup: SetupState) {
             },
             confirmButton = { TextButton(onClick = { pickLanguage = false }) { Text("Done", color = Hush.violet) } },
         )
+    }
+}
+
+private val bubbleSizes = listOf(0.85f to "Small", 1f to "Medium", 1.15f to "Large")
+
+/** Three sizes as a segmented control, the selected one raised on a white pill. */
+@Composable
+private fun SizePicker(value: Float, modifier: Modifier = Modifier, onChange: (Float) -> Unit) {
+    val c = HushTheme.colors
+    val current = bubbleSizes.minBy { kotlin.math.abs(it.first - value) }.first
+    Row(
+        modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(c.accentSoft).padding(3.dp),
+    ) {
+        bubbleSizes.forEach { (size, label) ->
+            val on = size == current
+            Box(
+                Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(9.dp))
+                    .background(if (on) c.surface else Color.Transparent)
+                    .clickable { onChange(size) }
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(label, style = HushType.subhead.copy(fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium), color = if (on) c.text else c.textSecondary)
+            }
+        }
     }
 }
 

@@ -23,8 +23,8 @@ import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * The floating dictation bubble: a see-through indigo orb with the Hushtype mark that turns into a live
- * waveform while you speak, a mint ring while the text is being polished, and a check when
+ * The floating dictation bubble: a see-through indigo orb with a waveform glyph that moves with your voice
+ * while you speak, a mint ring while the text is being polished, and a check when
  * it's typed. Drawn by hand so it animates smoothly at any size.
  */
 @SuppressLint("ViewConstructor")
@@ -170,44 +170,29 @@ class BubbleView(context: Context, private val diameterPx: Int) : View(context) 
         else if (look == Look.IDLE && idleFor <= 2500) postInvalidateDelayed(2600 - idleFor)
     }
 
-    /** The Hushtype mark (rising bars and a mint text caret), from res/drawable/hushtype_logo.xml. */
+    /** The waveform glyph the iPhone app and keyboard use, at rest. */
     private fun drawLogo(canvas: Canvas, c: Float, r: Float) {
-        // The mark spans x 96..412 and y 116..396 in the logo's 512 grid.
-        val k = r * 1.12f / 316f
-        canvas.save()
-        canvas.translate(c - 254f * k, c - 256f * k)
-        canvas.scale(k, k)
-        glyph.style = Paint.Style.FILL
-        glyph.color = Color.WHITE
-        for ((i, bar) in LOGO_BARS.withIndex()) {
-            glyph.alpha = (LOGO_ALPHAS[i] * 255).toInt()
-            rect.set(bar[0] - 17f, bar[1], bar[0] + 17f, bar[2])
-            canvas.drawRoundRect(rect, 17f, 17f, glyph)
-        }
-        glyph.color = MINT
-        rect.set(352f, 116f, 382f, 396f)
-        canvas.drawRoundRect(rect, 15f, 15f, glyph)
-        rect.set(322f, 116f, 412f, 142f)
-        canvas.drawRoundRect(rect, 13f, 13f, glyph)
-        rect.set(322f, 370f, 412f, 396f)
-        canvas.drawRoundRect(rect, 13f, 13f, glyph)
-        glyph.color = Color.WHITE
-        glyph.alpha = 255
-        canvas.restore()
+        drawBars(canvas, c, r) { i -> WAVE[i] }
     }
 
+    /** The same waveform, moving with your voice. */
     private fun drawWave(canvas: Canvas, c: Float, r: Float, t: Float) {
+        val voice = 0.3f + smoothLevel * 0.7f
+        drawBars(canvas, c, r) { i ->
+            val wobble = 0.6f + 0.4f * sin(t * 9f + i * 1.25f)
+            (0.18f + WAVE[i] * voice * wobble * 1.05f).coerceAtMost(1f)
+        }
+    }
+
+    private inline fun drawBars(canvas: Canvas, c: Float, r: Float, height: (Int) -> Float) {
         glyph.color = Color.WHITE
         glyph.style = Paint.Style.FILL
-        val bars = 5
-        val barW = r * 0.13f
-        val gap = r * 0.09f
-        val total = bars * barW + (bars - 1) * gap
-        val voice = 0.25f + smoothLevel * 0.75f
-        for (i in 0 until bars) {
-            val shape = floatArrayOf(0.45f, 0.75f, 1f, 0.75f, 0.45f)[i]
-            val wobble = 0.55f + 0.45f * sin(t * 9f + i * 1.3f)
-            val h = r * (0.16f + 0.78f * shape * voice * wobble)
+        val barW = r * 0.105f
+        val gap = r * 0.075f
+        val total = WAVE.size * barW + (WAVE.size - 1) * gap
+        val maxH = r * 0.98f
+        for (i in WAVE.indices) {
+            val h = max(barW, maxH * height(i))
             val x = c - total / 2 + i * (barW + gap)
             rect.set(x, c - h / 2, x + barW, c + h / 2)
             canvas.drawRoundRect(rect, barW / 2, barW / 2, glyph)
@@ -320,13 +305,7 @@ class BubbleView(context: Context, private val diameterPx: Int) : View(context) 
         val MINT = Color.rgb(125, 240, 196)
         val AMBER = Color.rgb(255, 196, 92)
 
-        /** Logo bars as x centre, top and bottom in the 512 grid. */
-        private val LOGO_BARS = arrayOf(
-            floatArrayOf(113f, 226f, 286f),
-            floatArrayOf(169f, 176f, 336f),
-            floatArrayOf(225f, 126f, 386f),
-            floatArrayOf(281f, 196f, 316f),
-        )
-        private val LOGO_ALPHAS = floatArrayOf(0.55f, 0.7f, 0.85f, 1f)
+        /** Bar heights of the waveform glyph (like SF Symbols' "waveform"), 0…1. */
+        private val WAVE = floatArrayOf(0.26f, 0.52f, 0.86f, 0.6f, 1f, 0.7f, 0.42f)
     }
 }

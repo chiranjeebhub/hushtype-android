@@ -37,6 +37,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -79,25 +81,24 @@ fun PolishPicker(app: HushtypeApp) {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val unsupported = availability == OnDeviceAvailability.UNSUPPORTED
         EngineTile(
             icon = Icons.Rounded.PhoneAndroid,
             title = "On this phone",
-            subtitle = "Gemini Nano. Free, private, works offline.",
+            subtitle = if (unsupported) "Gemini Nano isn't available on this phone. It needs a Pixel 9 or newer, or a recent Galaxy S."
+            else "Gemini Nano. Free, private, works offline.",
             selected = engine == CleanupEngine.ON_DEVICE,
+            enabled = !unsupported || engine == CleanupEngine.ON_DEVICE,
             status = when (availability) {
                 OnDeviceAvailability.AVAILABLE -> Hush.mint to "Ready"
                 OnDeviceAvailability.DOWNLOADABLE -> Hush.amber to "Needs a download"
                 OnDeviceAvailability.DOWNLOADING -> Hush.amber to "Downloading"
-                OnDeviceAvailability.UNSUPPORTED -> HushTheme.colors.textTertiary to "Not on this phone"
-                null -> null
+                OnDeviceAvailability.UNSUPPORTED, null -> null
             },
             onClick = { choose(CleanupEngine.ON_DEVICE) },
         ) {
             when {
-                availability == OnDeviceAvailability.UNSUPPORTED -> Text(
-                    "This phone doesn't have Gemini Nano (it needs a Pixel 9 or newer, or a recent Galaxy S). Use Claude instead.",
-                    style = HushType.subhead, color = HushTheme.colors.textSecondary,
-                )
+                unsupported -> Text("Pick Claude or Off instead.", style = HushType.subhead, color = Hush.amber)
                 availability == OnDeviceAvailability.DOWNLOADABLE || availability == OnDeviceAvailability.DOWNLOADING || download is ModelDownload.Progress -> {
                     val progress = download as? ModelDownload.Progress
                     if (progress != null) {
@@ -147,6 +148,7 @@ private fun EngineTile(
     selected: Boolean,
     status: Pair<Color, String>?,
     onClick: () -> Unit,
+    enabled: Boolean = true,
     expanded: @Composable () -> Unit = {},
 ) {
     val c = HushTheme.colors
@@ -158,23 +160,23 @@ private fun EngineTile(
             .background(c.surface)
             // Selection is shown once: a thin violet border.
             .border(BorderStroke(if (selected) 1.5.dp else 1.dp, if (selected) Hush.violet else c.hairline), shape)
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(16.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.alpha(if (enabled) 1f else 0.5f)) {
             IconTile(icon, tint = if (selected) Color.White else Hush.violet, background = if (selected) Hush.violetDeep else c.accentSoft)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(title, style = HushType.headline, color = c.text)
-                    if (status != null) {
-                        Spacer(Modifier.width(10.dp))
-                        StatusDot(status.first, status.second)
-                    }
-                }
+                Text(title, style = HushType.headline, color = c.text)
                 Spacer(Modifier.height(2.dp))
                 Text(subtitle, style = HushType.subhead, color = c.textSecondary)
+                if (status != null) {
+                    Spacer(Modifier.height(6.dp))
+                    StatusDot(status.first, status.second)
+                }
             }
+            Spacer(Modifier.width(12.dp))
+            RadioMark(selected)
         }
         AnimatedVisibility(selected) {
             Box(Modifier.padding(top = 14.dp)) { expanded() }
@@ -226,5 +228,21 @@ fun ClaudeKeyField(app: HushtypeApp) {
             "Get a key at console.anthropic.com. It's stored encrypted on this phone and only sent to Anthropic.",
             style = HushType.subhead, color = HushTheme.colors.textTertiary,
         )
+    }
+}
+
+/** A round selection mark: a violet disc with a check when chosen, an empty ring when not. */
+@Composable
+private fun RadioMark(selected: Boolean) {
+    val c = HushTheme.colors
+    Box(
+        Modifier
+            .size(22.dp)
+            .clip(CircleShape)
+            .background(if (selected) Hush.violet else Color.Transparent)
+            .border(BorderStroke(if (selected) 0.dp else 1.5.dp, if (selected) Hush.violet else c.textTertiary), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) Icon(Icons.Rounded.Check, null, tint = Color.White, modifier = Modifier.size(15.dp))
     }
 }

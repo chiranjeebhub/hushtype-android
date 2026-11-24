@@ -59,15 +59,27 @@ fun HomeScreen(app: HushtypeApp, setup: SetupState, openHistory: () -> Unit) {
     val c = HushTheme.colors
     val history by app.history.entries.collectAsState()
     val context = LocalContext.current
-    LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 24.dp)) {
+    LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 28.dp)) {
         item {
-            Row(Modifier.padding(top = 36.dp, bottom = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Image(painterResource(R.drawable.hushtype_logo), null, Modifier.size(34.dp))
+            Row(Modifier.padding(top = 8.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Image(painterResource(R.drawable.hushtype_logo), null, Modifier.size(32.dp).clip(RoundedCornerShape(9.dp)))
                 Spacer(Modifier.width(12.dp))
                 Text("Hushtype", style = HushType.title, color = c.text, modifier = Modifier.weight(1f))
             }
         }
-        item { if (setup.ready) ReadyCard() else SetupCard(setup) }
+        item {
+            when {
+                setup.ready -> ReadyCard()
+                setup.microphone && setup.bubbleStopped -> StoppedCard()
+                else -> SetupCard(setup)
+            }
+        }
+        if (setup.accessibility && !setup.unrestricted) {
+            item {
+                Spacer(Modifier.height(12.dp))
+                KeepRunningCard()
+            }
+        }
         item {
             SectionLabel("Try it")
             TryField()
@@ -78,9 +90,14 @@ fun HomeScreen(app: HushtypeApp, setup: SetupState, openHistory: () -> Unit) {
                 Stats(history)
             }
             item {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    SectionLabel("Recent", Modifier.weight(1f))
-                    TextButton(onClick = openHistory) { Text("See all", color = Hush.violet, style = HushType.subhead.copy(fontWeight = FontWeight.SemiBold)) }
+                Row(Modifier.padding(top = 22.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("RECENT", style = HushType.caption, color = c.textTertiary, modifier = Modifier.padding(start = 6.dp).weight(1f))
+                    Text(
+                        "See all",
+                        color = Hush.violet,
+                        style = HushType.subhead.copy(fontWeight = FontWeight.SemiBold),
+                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = openHistory).padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
                 }
             }
             items(history.take(4), key = { it.id }) { entry ->
@@ -108,8 +125,58 @@ private fun ReadyCard() {
                 Spacer(Modifier.height(4.dp))
                 Text("Tap again to type it. Hold to talk, drag to move, drop on ✕ to hide it for an hour.", style = HushType.subhead, color = Color.White.copy(alpha = 0.75f))
             }
+            Spacer(Modifier.width(14.dp))
+            BubbleGlyph(60.dp)
+        }
+    }
+}
+
+/** The switch is on, but Android stopped the bubble and won't bring it back by itself. */
+@Composable
+private fun StoppedCard() {
+    val context = LocalContext.current
+    val c = HushTheme.colors
+    HushCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(8.dp).clip(CircleShape).background(Hush.amber))
             Spacer(Modifier.width(8.dp))
-            ListeningOrb(84.dp)
+            Text("Bubble stopped", style = HushType.subhead.copy(fontWeight = FontWeight.SemiBold), color = Hush.amber)
+        }
+        Spacer(Modifier.height(8.dp))
+        Text("Android stopped the bubble in the background", style = HushType.headline, color = c.text)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Turn it back on: in Accessibility, open “Downloaded apps”, tap Hushtype bubble, switch it off and on again.",
+            style = HushType.subhead, color = c.textSecondary,
+        )
+        Spacer(Modifier.height(14.dp))
+        PrimaryButton("Open accessibility settings") { SetupState.openAccessibilitySettings(context) }
+    }
+}
+
+/** Phones that save battery aggressively stop the bubble unless they're told not to. */
+@Composable
+private fun KeepRunningCard() {
+    val context = LocalContext.current
+    val c = HushTheme.colors
+    HushCard {
+        Text("Keep the bubble running", style = HushType.body.copy(fontWeight = FontWeight.SemiBold), color = c.text)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            if (SetupState.isXiaomi) "Your phone stops apps it thinks are idle. Allow Hushtype to run without battery limits, and turn on Autostart for it."
+            else "Your phone may stop Hushtype to save battery. Let it run without battery limits.",
+            style = HushType.subhead, color = c.textSecondary,
+        )
+        Row {
+            TextButton(onClick = { SetupState.requestUnrestricted(context) }, contentPadding = PaddingValues(0.dp)) {
+                Text("Allow", color = Hush.violet, style = HushType.body.copy(fontWeight = FontWeight.SemiBold))
+            }
+            if (SetupState.isXiaomi) {
+                Spacer(Modifier.width(20.dp))
+                TextButton(onClick = { SetupState.openAutostart(context) }, contentPadding = PaddingValues(0.dp)) {
+                    Text("Autostart", color = Hush.violet, style = HushType.body.copy(fontWeight = FontWeight.SemiBold))
+                }
+            }
         }
     }
 }
@@ -126,8 +193,8 @@ private fun SetupCard(setup: SetupState) {
             StatusDot(if (setup.microphone) Hush.mint else Hush.amber, if (setup.microphone) "On" else "Off")
         }
         Divider()
-        SettingRow("Bubble", if (setup.accessibility) "On" else "Turn on “Hushtype bubble” in Accessibility", Icons.Rounded.Accessibility, onClick = { SetupState.openAccessibilitySettings(context) }) {
-            StatusDot(if (setup.accessibility) Hush.mint else Hush.amber, if (setup.accessibility) "On" else "Off")
+        SettingRow("Bubble", if (setup.bubbleStopped) "Stopped. Switch it off and on in Accessibility" else if (setup.accessibility) "On" else "Turn on “Hushtype bubble” in Accessibility", Icons.Rounded.Accessibility, onClick = { SetupState.openAccessibilitySettings(context) }) {
+            StatusDot(if (setup.ready || (setup.accessibility && setup.bubbleRunning)) Hush.mint else Hush.amber, if (setup.bubbleRunning) "On" else if (setup.bubbleStopped) "Stopped" else "Off")
         }
     }
 }
@@ -208,7 +275,7 @@ fun HistoryScreen(app: HushtypeApp, back: () -> Unit) {
     val c = HushTheme.colors
     val history by app.history.entries.collectAsState()
     val context = LocalContext.current
-    LazyColumn(contentPadding = PaddingValues(start = 12.dp, end = 20.dp, top = 36.dp, bottom = 24.dp)) {
+    LazyColumn(contentPadding = PaddingValues(start = 12.dp, end = 20.dp, top = 8.dp, bottom = 28.dp)) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
                 IconButton(onClick = back) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = c.text) }

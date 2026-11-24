@@ -54,7 +54,7 @@ import app.hushtype.core.Snippet
 
 @Composable
 private fun ScreenTitle(title: String, subtitle: String) {
-    Column(Modifier.padding(top = 36.dp, bottom = 8.dp)) {
+    Column(Modifier.padding(top = 16.dp, bottom = 8.dp)) {
         Text(title, style = HushType.largeTitle, color = HushTheme.colors.text)
         Spacer(Modifier.height(6.dp))
         Text(subtitle, style = HushType.body, color = HushTheme.colors.textSecondary)
@@ -99,10 +99,11 @@ fun DictionaryScreen(app: HushtypeApp) {
                 )
                 Spacer(Modifier.width(10.dp))
                 Box(
-                    Modifier.size(54.dp).clip(RoundedCornerShape(16.dp)).background(if (draft.isBlank()) c.surfaceRaised else Hush.violetDeep)
+                    Modifier.padding(top = 8.dp).size(56.dp).clip(RoundedCornerShape(16.dp))
+                        .background(if (draft.isBlank()) c.accentSoft else Hush.violetDeep)
                         .clickable(enabled = draft.isNotBlank()) { add() },
                     contentAlignment = Alignment.Center,
-                ) { Icon(Icons.Rounded.Add, "Add", tint = if (draft.isBlank()) c.textTertiary else Color.White) }
+                ) { Icon(Icons.Rounded.Add, "Add", tint = if (draft.isBlank()) Hush.violet else Color.White) }
             }
             Spacer(Modifier.height(20.dp))
         }
@@ -164,12 +165,31 @@ fun SnippetsScreen(app: HushtypeApp) {
         }
         if (snippets.isEmpty()) {
             item {
-                HushCard {
-                    Text("For example", style = HushType.caption, color = c.textTertiary)
-                    Spacer(Modifier.height(8.dp))
-                    Text("“my calendar link”", style = HushType.headline, color = c.text)
-                    Text("cal.com/you/30min", style = HushType.body, color = c.textSecondary)
+                SectionLabel("Ideas")
+                HushCard(padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
+                    listOf(
+                        "my calendar link" to "cal.com/you/30min",
+                        "my address" to "221B Baker Street, London",
+                        "sign off" to "Thanks, and talk soon!",
+                    ).forEachIndexed { i, (say, type) ->
+                        if (i > 0) Divider()
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                                .clickable { editing = Snippet(trigger = say, expansion = type) }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text("“$say”", style = HushType.body.copy(fontWeight = FontWeight.SemiBold), color = c.text)
+                                Spacer(Modifier.height(2.dp))
+                                Text(type, style = HushType.subhead, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                            Icon(Icons.Rounded.Add, "Use this", tint = Hush.violet, modifier = Modifier.size(20.dp))
+                        }
+                    }
                 }
+                Spacer(Modifier.height(10.dp))
+                Text("Tap one to make it yours.", style = HushType.subhead, color = c.textTertiary, modifier = Modifier.padding(start = 6.dp))
             }
         }
         items(snippets, key = { it.id }) { snippet ->
